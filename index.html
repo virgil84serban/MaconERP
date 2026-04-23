@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Manager Flota" />
+  <title>Manager Flota - Dashboard</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="authScreen" class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-card__header">
+        <p class="auth-card__eyebrow">Manager Flota</p>
+        <h1>Autentificare</h1>
+        <p>Intra in aplicatie cu emailul si parola din lista de utilizatori.</p>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" autocomplete="username" placeholder="nume@firma.ro" required />
+
+        <label for="loginPassword">Parola</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Introdu parola" required />
+
+        <button id="loginBtn" class="btn btn--primary" type="submit">Autentificare</button>
+        <p id="loginMessage" class="message auth-form__message"></p>
+      </form>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <h1>Manager Flota</h1>
+        <p>Dashboard Web</p>
+      </div>
+
+      <nav class="sidebar__nav">
+        <button class="nav-btn nav-btn--active" type="button" data-section="dashboard" data-title="Dashboard" data-subtitle="Privire rapida asupra flotei" data-role-allow="admin,manager,office,sofer">Dashboard</button>
+        <button class="nav-btn" type="button" data-section="masini" data-title="Masini" data-subtitle="Vizualizare si administrare parc auto" data-role-allow="admin,manager,office">Masini</button>
+        <button class="nav-btn" type="button" data-section="soferi" data-title="Soferi" data-subtitle="Utilizatori operativi si datele lor de lucru" data-role-allow="admin,manager,office">Soferi</button>
+        <button class="nav-btn" type="button" data-section="users" data-title="Users" data-subtitle="Administrare conturi si roluri din aplicatie" data-role-allow="admin">Users</button>
+        <button class="nav-btn" type="button" data-section="asignari" data-title="Asignari" data-subtitle="Legaturi active intre masini si soferi" data-role-allow="admin,manager,office">Asignari</button>
+        <button class="nav-btn" type="button" data-section="alimentari" data-title="Alimentari" data-subtitle="Costuri si alimentari recente" data-role-allow="admin,manager,office,sofer">Alimentari</button>
+        <div class="sidebar__group-label">Combustibil</div>
+        <button class="nav-btn" type="button" data-section="bazin-motorina" data-title="Bazin Motorina" data-subtitle="Nivel curent si operatiuni pe rezervorul mobil" data-role-allow="admin,manager,office,sofer">Bazin Motorina</button>
+        <button class="nav-btn" type="button" data-section="alimentari-utilaje" data-title="Alimentari Utilaje" data-subtitle="Descarcare motorina catre utilajele existente" data-role-allow="admin,manager,office,sofer">Alimentari Utilaje</button>
+        <button class="nav-btn" type="button" data-section="istoric-bazin" data-title="Istoric Bazin" data-subtitle="Cronologia tranzactiilor de umplere si descarcare" data-role-allow="admin,manager,office">Istoric Bazin</button>
+        <button class="nav-btn" type="button" data-section="foi-parcurs" data-title="Foi Parcurs" data-subtitle="Liste, filtre si operare pe cursele zilnice" data-role-allow="admin,manager,office,sofer">Foi Parcurs</button>
+        <button class="nav-btn" type="button" data-section="documente" data-title="Documente" data-subtitle="Expirari, statusuri si evidenta documentelor" data-role-allow="admin,manager,office">Documente</button>
+        <button class="nav-btn" type="button" data-section="defecte" data-title="Defecte" data-subtitle="Raportare si urmarire defecte active" data-role-allow="admin,manager,office,sofer">Defecte</button>
+      </nav>
+
+      <div class="sidebar__user">
+        <p id="currentUserName" class="sidebar__user-name">Neautentificat</p>
+        <p id="currentUserRole" class="sidebar__user-role">-</p>
+        <div id="devTools" class="hidden">
+          <label class="sidebar__user-label" for="devRoleSelect">Rol dezvoltare</label>
+          <select id="devRoleSelect" class="sidebar__user-select">
+            <option value="ADMIN">ADMIN</option>
+            <option value="MANAGER">MANAGER</option>
+            <option value="OFFICE">OFFICE</option>
+            <option value="SOFER">SOFER</option>
+          </select>
+        </div>
+        <button id="logoutBtn" class="btn btn--secondary" type="button">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle" class="topbar__subtitle">Privire rapida asupra flotei</p>
+        </div>
+
+        <div class="topbar__actions">
+          <button id="installAppBtn" class="btn btn--secondary hidden" type="button">
+            Instaleaza app
+          </button>
+          <button id="refreshBtn" class="btn btn--primary" type="button">
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <section class="status-row">
+        <div id="loadingState" class="status-box status-box--info hidden">
+          Se incarca datele din dashboard...
+        </div>
+
+        <div id="errorState" class="status-box status-box--error hidden"></div>
+
+        <div id="successState" class="status-box status-box--success hidden"></div>
+      </section>
+
+      <section id="dashboardSection" class="app-section">
+      <section class="cards-grid" id="cardsGrid">
+        <article class="stat-card" data-nav-section="masini">
+          <span id="labelMasiniActive" class="stat-card__label">Masini active</span>
+          <strong id="masiniActive">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="masini">
+          <span id="labelMasiniInService" class="stat-card__label">Masini in service</span>
+          <strong id="masiniInService">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="soferi">
+          <span id="labelSoferiActivi" class="stat-card__label">Soferi activi</span>
+          <strong id="soferiActivi">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="asignari">
+          <span id="labelAsignariActive" class="stat-card__label">Asignari active</span>
+          <strong id="asignariActive">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="alimentari">
+          <span id="labelTotalAlimentari" class="stat-card__label">Total alimentari</span>
+          <strong id="totalAlimentari">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="alimentari">
+          <span id="labelCostTotalAlimentari" class="stat-card__label">Cost total alimentari</span>
+          <strong id="costTotalAlimentari">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="foi-parcurs">
+          <span id="labelTotalFoiParcurs" class="stat-card__label">Foi de parcurs</span>
+          <strong id="totalFoiParcurs">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="foi-parcurs">
+          <span id="labelKmTotalParcurs" class="stat-card__label">KM total parcurs</span>
+          <strong id="kmTotalParcurs">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="documente">
+          <span id="labelTotalDocumente" class="stat-card__label">Total documente</span>
+          <strong id="totalDocumente">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="documente">
+          <span id="labelDocumenteExpirate" class="stat-card__label">Documente expirate</span>
+          <strong id="documenteExpirate">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="documente">
+          <span id="labelDocumenteExpiraIn30Zile" class="stat-card__label">Expira in 30 zile</span>
+          <strong id="documenteExpiraIn30Zile">-</strong>
+        </article>
+
+        <article class="stat-card" data-nav-section="documente">
+          <span id="labelDocumenteExpiraIn7Zile" class="stat-card__label">Expira in 7 zile</span>
+          <strong id="documenteExpiraIn7Zile">-</strong>
+        </article>
+
+        <article class="stat-card stat-card--accent" data-nav-section="dashboard" data-scroll-target="revisionsTableBody">
+          <span id="labelTotalRevizii" class="stat-card__label">Total revizii</span>
+          <strong id="totalRevizii">-</strong>
+        </article>
+
+        <article class="stat-card stat-card--warning" data-nav-section="defecte">
+          <span id="labelDefecteDeschise" class="stat-card__label">Defecte deschise</span>
+          <strong id="defecteDeschise">-</strong>
+        </article>
+      </section>
+
+      <section class="insights-grid">
+        <article class="card insight-card">
+          <div class="card__header">
+            <h3>Focus operare</h3>
+          </div>
+          <p class="insight-card__value" id="operationalStatusText">Se asteapta date din API.</p>
+          <p class="insight-card__hint">
+            Prioritizam foi de parcurs, kilometrii si activitatea zilnica din flota.
+          </p>
+        </article>
+
+        <article class="card insight-card insight-card--alert">
+          <div class="card__header">
+            <h3>Documente critice</h3>
+          </div>
+          <p class="insight-card__value" id="priorityStatusText">Nu exista alerte critice momentan.</p>
+          <p class="insight-card__hint">
+            Expirari, documente restante si urgentele care trebuie rezolvate imediat.
+          </p>
+        </article>
+      </section>
+
+      <section class="operations-grid">
+        <article class="card operation-card operation-card--primary" data-nav-section="foi-parcurs">
+          <div class="card__header">
+            <h3>Foi Parcurs Azi</h3>
+          </div>
+          <p class="operation-card__value" id="foiParcursAzi">-</p>
+          <p class="operation-card__hint">
+            Numarul de foi de parcurs inregistrate pentru ziua curenta.
+          </p>
+        </article>
+
+        <article class="card operation-card operation-card--warning" data-nav-section="foi-parcurs">
+          <div class="card__header">
+            <h3>Masini Fara Foaie Azi</h3>
+          </div>
+          <p class="operation-card__value" id="masiniFaraFoaieAzi">-</p>
+          <p class="operation-card__hint">
+            Vehicule active care nu au inca foaie de parcurs pentru astazi.
+          </p>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="card">
+          <div class="card__header">
+            <h3>Ultimele foi de parcurs</h3>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Masina</th>
+                  <th>Sofer</th>
+                  <th>Data</th>
+                  <th>Destinatie</th>
+                  <th>KM</th>
+                </tr>
+              </thead>
+              <tbody id="tripTableBody">
+                <tr>
+                  <td colspan="5" class="empty-cell">Nu exista foi de parcurs.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__header">
+            <h3>Documente critice si expirari viitoare</h3>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Masina</th>
+                  <th>Tip</th>
+                  <th>Expira la</th>
+                  <th>Zile ramase</th>
+                  <th>Nivel</th>
+                </tr>
+              </thead>
+              <tbody id="documentsTableBody">
+                <tr>
+                  <td colspan="5" class="empty-cell">Nu exista documente in expirare.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card__header">
+            <h3>Ultimele alimentari</h3>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Masina</th>
+                  <th>Sofer</th>
+                  <th>Data</th>
+                  <th>Litri</th>
+                  <th>Cost</th>
+                </tr>
+              </thead>
+              <tbody id="fuelTableBody">
+                <tr>
+                  <td colspan="5" class="empty-cell">Nu exista alimentari.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card">
+  <div class="card__header">
+    <h3>Ultimele defecte raportate</h3>
+  </div>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Masina</th>
+          <th>Sofer</th>
+          <th>Data</th>
+          <th>Titlu</th>
+          <th>Severitate</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="defectsTableBody">
+        <tr>
+          <td colspan="6" class="empty-cell">Nu exista defecte raportate.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</article>
+
+        <article class="card">
+          <div class="card__header">
+            <h3>Ultimele revizii</h3>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Masina</th>
+                  <th>Data</th>
+                  <th>KM</th>
+                  <th>Tip</th>
+                  <th>Service</th>
+                  <th>Cost</th>
+                </tr>
+              </thead>
+              <tbody id="revisionsTableBody">
+                <tr>
+                  <td colspan="6" class="empty-cell">Nu exista revizii.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+      </section>
+
+      </section>
+
+        <section id="masiniSection" class="app-section hidden">
+          <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Masini</h3>
+            <p>Pagina dedicata pentru citire si operare pe masini. Aici mutam editarile din panoul principal si pastram dashboardul doar pentru overview.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete">Stergere</span>
+            </div>
+          </div>
+
+            <article class="card export-card">
+              <div class="card__header">
+                <h3>Export rapoarte</h3>
+              </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+              <select id="reportVehicleStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="IN_SERVICE">IN_SERVICE</option>
+                <option value="INDISPONIBILA">INDISPONIBILA</option>
+                <option value="VANDUTA">VANDUTA</option>
+                <option value="INACTIVA">INACTIVA</option>
+              </select>
+              <button id="exportVehicleExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportVehiclePdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="vehicleReportMessage" class="message"></p>
+          </article>
+
+          <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="vehicleFilterId" type="text" placeholder="Filtru masina ID" />
+              <input id="vehicleFilterPlate" type="text" placeholder="Filtru numar inmatriculare" />
+              <select id="vehicleFilterStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="IN SERVICE">IN SERVICE</option>
+                <option value="INACTIVA">INACTIVA</option>
+              </select>
+              <button id="applyVehicleFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Numar</th>
+                    <th>ID intern</th>
+                    <th>Tip</th>
+                    <th>Masina</th>
+                    <th>Status</th>
+                    <th>KM</th>
+                    <th>Sofer curent</th>
+                  </tr>
+                </thead>
+                <tbody id="vehiclesTableBody">
+                  <tr>
+                    <td colspan="7" class="empty-cell">Nu exista masini disponibile.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+            <article class="card">
+              <div class="card__header">
+                <h3>Adaugare / editare masina</h3>
+              </div>
+
+            <form id="vehicleForm" class="module-form">
+              <input id="vehicleMasinaID" type="hidden" />
+              <input id="vehicleNrInmatriculare" type="text" placeholder="Nr inmatriculare (cheie control)" list="vehiclePlateOptions" data-vehicle-lookup="vehicle" required />
+              <input id="vehicleMarca" type="text" placeholder="Marca" />
+              <input id="vehicleModel" type="text" placeholder="Model" />
+              <input id="vehicleAn" type="number" placeholder="An" min="1990" max="2100" />
+              <input id="vehicleTipVehicul" type="text" placeholder="Tip vehicul / utilaj" />
+              <input id="vehicleCombustibil" type="text" placeholder="Combustibil" />
+              <select id="vehicleStatus">
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="IN SERVICE">IN SERVICE</option>
+                <option value="INACTIVA">INACTIVA</option>
+              </select>
+              <div class="field-stack">
+                <input id="vehicleKmCurenti" type="number" placeholder="KM initiali / KM calculati din foi parcurs" min="0" />
+                <p class="field-help">La masina noua poti introduce KM initiali. Dupa prima foaie de parcurs, valoarea se actualizeaza automat din KM sosire.</p>
+              </div>
+              <input id="vehicleSoferCurentID" type="text" placeholder="Sofer curent ID" />
+              <div class="field-stack">
+                <input id="vehicleITPExpiraLa" type="date" />
+                <p class="field-help">Data expirarii ITP</p>
+              </div>
+              <div class="field-stack">
+                <input id="vehicleRCAExpiraLa" type="date" />
+                <p class="field-help">Data expirarii RCA</p>
+              </div>
+              <div class="field-stack">
+                <input id="vehicleRovinietaExpiraLa" type="date" />
+                <p class="field-help">Data expirarii rovinietei</p>
+              </div>
+              <textarea id="vehicleObservatii" class="module-form__textarea" placeholder="Observatii"></textarea>
+              <div class="module-form__actions">
+                <button id="saveVehicleBtn" class="btn btn--primary" type="submit">Salveaza masina</button>
+                <button id="cancelVehicleEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteVehicleBtn" class="btn btn--danger hidden" type="button">Sterge masina</button>
+                </div>
+                <p id="vehicleMessage" class="message"></p>
+
+              </form>
+            </article>
+          </div>
+        </section>
+
+        <section id="soferiSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Soferi</h3>
+            <p>Aici vom grupa datele soferilor, legatura cu utilizatorii si actiunile permise dupa rol.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete">Stergere</span>
+            </div>
+          </div>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export rapoarte</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportDriverName" type="text" placeholder="Nume sofer" />
+              <select id="reportDriverStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIV">ACTIV</option>
+                <option value="INACTIV">INACTIV</option>
+              </select>
+              <button id="exportDriverExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportDriverPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="driverReportMessage" class="message"></p>
+          </article>
+
+          <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="driverFilterId" type="text" placeholder="Filtru sofer ID" />
+              <input id="driverFilterName" type="text" placeholder="Filtru nume" />
+              <select id="driverFilterStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIV">ACTIV</option>
+                <option value="INACTIV">INACTIV</option>
+              </select>
+              <button id="applyDriverFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nume</th>
+                    <th>Telefon</th>
+                    <th>Permis</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="driversTableBody">
+                  <tr>
+                    <td colspan="5" class="empty-cell">Lista de soferi va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare sofer</h3>
+            </div>
+
+            <form id="driverForm" class="module-form">
+              <input id="driverSoferID" type="hidden" />
+              <input id="driverUserID" type="text" placeholder="UserID" />
+              <input id="driverNume" type="text" placeholder="Nume" required />
+              <input id="driverTelefon" type="text" placeholder="Telefon" />
+              <input id="driverCategoriePermis" type="text" placeholder="Categorie permis" />
+              <select id="driverStatus">
+                <option value="ACTIV">ACTIV</option>
+                <option value="INACTIV">INACTIV</option>
+              </select>
+              <textarea id="driverObservatii" class="module-form__textarea" placeholder="Observatii"></textarea>
+              <div class="module-form__actions">
+                <button id="saveDriverBtn" class="btn btn--primary" type="submit">Salveaza sofer</button>
+                <button id="cancelDriverEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteDriverBtn" class="btn btn--danger hidden" type="button">Sterge sofer</button>
+              </div>
+              <p id="driverMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section id="bazinMotorinaSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune combustibil</p>
+            <h3>Bazin Motorina</h3>
+            <p>Gestionam nivelul curent al rezervorului mobil si operatiunile de incarcare sau alimentare utilaje.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit-bazin">Operare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete-bazin">Stergere</span>
+          </div>
+        </div>
+
+        <div class="module-grid module-grid--stacked">
+          <article class="card">
+            <div class="card__header">
+              <h3>Status bazin</h3>
+            </div>
+
+            <div class="tank-overview">
+              <div class="tank-overview__stats">
+                <div class="tank-overview__stat">
+                  <span>Capacitate maxima</span>
+                  <strong id="tankCapacityValue">-</strong>
+                </div>
+                <div class="tank-overview__stat">
+                  <span>Nivel curent</span>
+                  <strong id="tankCurrentLevelValue">-</strong>
+                </div>
+                <div class="tank-overview__stat">
+                  <span>Locatie curenta</span>
+                  <strong id="tankLocationValue">-</strong>
+                </div>
+                <div class="tank-overview__stat">
+                  <span>Grad umplere</span>
+                  <strong id="tankFillPercentValue">-</strong>
+                </div>
+              </div>
+
+              <div class="tank-gauge">
+                <div class="tank-gauge__track">
+                  <div id="tankGaugeFill" class="tank-gauge__fill"></div>
+                </div>
+                <p id="tankStatusHint" class="field-help field-help--highlight">Nivelul curent al bazinului va fi afisat aici dupa incarcare.</p>
+              </div>
+            </div>
+          </article>
+
+          <div class="module-grid">
+            <article class="card">
+              <div class="card__header">
+                <h3>Operatiune bazin</h3>
+              </div>
+
+              <form id="fuelTankOperationForm" class="module-form">
+                <input id="fuelTankId" type="hidden" />
+                <input id="fuelTankName" type="text" placeholder="Nume bazin" />
+                <input id="fuelTankCapacity" type="number" placeholder="Capacitate maxima litri" min="0" step="0.01" />
+                <select id="fuelTankOperationType">
+                  <option value="UMPLERE">UMPLERE</option>
+                  <option value="DESCARCARE">DESCARCARE</option>
+                </select>
+                <input id="fuelTankQuantity" type="number" placeholder="Cantitate litri" min="0" step="0.01" required />
+                <input id="fuelTankLocation" type="text" placeholder="Locatie operatie" required />
+                <input id="fuelTankUtility" type="text" placeholder="Utilaj alimentat" list="utilajOptions" />
+                <textarea id="fuelTankNotes" class="module-form__textarea" placeholder="Observatii operatie"></textarea>
+                <div class="module-form__actions">
+                  <button id="fillTankBtn" class="btn btn--secondary" type="button">Umplere bazin</button>
+                  <button id="dispenseTankBtn" class="btn btn--primary" type="button">Alimentare utilaj</button>
+                  <button id="cancelFuelTankEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                </div>
+                <p id="fuelTankMessage" class="message"></p>
+              </form>
+            </article>
+
+            <article class="card">
+              <div class="card__header">
+                <h3>Ultimele tranzactii</h3>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Tip</th>
+                      <th>Cantitate</th>
+                      <th>Utilaj</th>
+                      <th>Locatie</th>
+                      <th>User</th>
+                      <th>Actiuni</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tankLatestTransactionsBody">
+                    <tr>
+                      <td colspan="7" class="empty-cell">Nu exista operatiuni inregistrate.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="alimentariUtilajeSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune combustibil</p>
+            <h3>Alimentari Utilaje</h3>
+            <p>Operam descarcarea din bazinul mobil catre utilajele existente si pastram trasabilitatea completa.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit-bazin">Operare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete-bazin">Stergere</span>
+          </div>
+        </div>
+
+        <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="tankTxnFilterType" type="text" placeholder="Filtru tip operatie" />
+              <input id="tankTxnFilterUtility" type="text" placeholder="Filtru utilaj" />
+              <input id="tankTxnFilterDate" type="date" />
+              <button id="applyTankTxnFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tip</th>
+                    <th>Cantitate</th>
+                    <th>Utilaj</th>
+                    <th>Locatie</th>
+                    <th>User</th>
+                    <th>Actiuni</th>
+                  </tr>
+                </thead>
+                <tbody id="tankUtilityTransactionsBody">
+                  <tr>
+                    <td colspan="7" class="empty-cell">Nu exista alimentari utilaje disponibile.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export alimentari utilaje</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <button id="exportTankUtilityExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportTankUtilityPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="tankUtilityReportMessage" class="message"></p>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Alimentare utilaj</h3>
+            </div>
+
+            <form id="fuelUtilityForm" class="module-form">
+              <input id="fuelUtilityTankId" type="hidden" />
+              <input id="fuelUtilityLevel" type="text" placeholder="Nivel curent bazin" disabled />
+              <input id="fuelUtilityLocation" type="text" placeholder="Locatie curenta / santier" required />
+              <input id="fuelUtilityTarget" type="text" placeholder="Utilaj alimentat" list="utilajOptions" required />
+              <input id="fuelUtilityQuantity" type="number" placeholder="Cantitate litri" min="0" step="0.01" required />
+              <textarea id="fuelUtilityNotes" class="module-form__textarea" placeholder="Observatii alimentare"></textarea>
+              <div class="module-form__actions">
+                <button id="saveFuelUtilityBtn" class="btn btn--primary" type="submit">Alimentare utilaj</button>
+              </div>
+              <p id="fuelUtilityMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section id="istoricBazinSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune combustibil</p>
+            <h3>Istoric Bazin</h3>
+            <p>Vizualizam cronologic toate operatiunile de umplere si descarcare impreuna cu utilajul, locatia si utilizatorul care a operat.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete-bazin">Stergere</span>
+          </div>
+        </div>
+
+        <article class="card export-card">
+          <div class="card__header">
+            <h3>Export istoric</h3>
+          </div>
+          <div class="filters-row filters-row--compact">
+            <input id="reportTankType" type="text" placeholder="Tip operatie" />
+            <input id="reportTankLocation" type="text" placeholder="Locatie" />
+            <input id="reportTankDateFrom" type="date" />
+            <input id="reportTankDateTo" type="date" />
+            <button id="exportTankExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+            <button id="exportTankPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+          </div>
+          <p id="tankReportMessage" class="message"></p>
+        </article>
+
+        <article class="card">
+          <div class="card__header">
+            <h3>Istoric cronologic</h3>
+          </div>
+
+          <div class="filters-row">
+            <input id="tankHistoryFilterType" type="text" placeholder="Filtru tip operatie" />
+            <input id="tankHistoryFilterLocation" type="text" placeholder="Filtru locatie" />
+            <input id="tankHistoryFilterDate" type="date" />
+            <button id="applyTankHistoryFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tip operatie</th>
+                  <th>Cantitate</th>
+                  <th>Utilaj</th>
+                  <th>Locatie</th>
+                  <th>Utilizator</th>
+                  <th>Observatii</th>
+                  <th>Actiuni</th>
+                </tr>
+              </thead>
+              <tbody id="tankHistoryBody">
+                <tr>
+                  <td colspan="8" class="empty-cell">Nu exista tranzactii de bazin disponibile.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p id="tankHistoryMessage" class="message"></p>
+        </article>
+      </section>
+
+      <section id="usersSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune administrare</p>
+            <h3>Users</h3>
+            <p>Administrezi direct conturile din aplicatie, rolurile si statusurile de acces.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete">Stergere</span>
+          </div>
+        </div>
+
+        <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="userFilterName" type="text" placeholder="Filtru nume / email" />
+              <select id="userFilterRole">
+                <option value="">Toate rolurile</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="OFFICE">OFFICE</option>
+                <option value="SOFER">SOFER</option>
+              </select>
+              <select id="userFilterStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIV">ACTIV</option>
+                <option value="INACTIV">INACTIV</option>
+              </select>
+              <button id="applyUserFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr>
+                    <td colspan="4" class="empty-cell">Lista de utilizatori va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare user</h3>
+            </div>
+
+            <form id="userForm" class="module-form">
+              <input id="userUserID" type="hidden" />
+              <input id="userName" type="text" placeholder="Nume" required />
+              <input id="userEmail" type="email" placeholder="Email" required />
+              <input id="userPassword" type="text" placeholder="Parola / ParolaHash" required />
+              <select id="userRole" required>
+                <option value="ADMIN">ADMIN</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="OFFICE">OFFICE</option>
+                <option value="SOFER">SOFER</option>
+              </select>
+              <select id="userStatus" required>
+                <option value="ACTIV">ACTIV</option>
+                <option value="INACTIV">INACTIV</option>
+              </select>
+              <textarea id="userObservatii" class="module-form__textarea" placeholder="Observatii pentru administrare user"></textarea>
+              <div class="module-form__actions">
+                <button id="saveUserBtn" class="btn btn--primary" type="submit">Salveaza user</button>
+                <button id="cancelUserEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteUserBtn" class="btn btn--danger hidden" type="button">Sterge user</button>
+              </div>
+              <p id="userMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+        <section id="asignariSection" class="app-section hidden">
+          <div class="section-intro card">
+            <div>
+              <p class="section-intro__eyebrow">Sectiune operationala</p>
+              <h3>Asignari</h3>
+              <p>Urmarim legatura activa masina-sofer si pregatim operarea din aceasta pagina, nu din dashboard.</p>
+            </div>
+            <div class="section-capabilities">
+              <span class="capability-pill">Citire</span>
+              <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            </div>
+          </div>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export rapoarte</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportAssignmentVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+              <input id="reportAssignmentDateFrom" type="date" />
+              <input id="reportAssignmentDateTo" type="date" />
+              <button id="exportAssignmentExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportAssignmentPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="assignmentReportMessage" class="message"></p>
+          </article>
+
+          <div class="module-grid">
+            <article class="card">
+              <div class="card__header">
+                <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="assignmentFilterMasina" type="text" placeholder="Filtru nr inmatriculare / ID" />
+              <input id="assignmentFilterSofer" type="text" placeholder="Filtru sofer ID" />
+              <select id="assignmentFilterStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="INCHEIATA">INCHEIATA</option>
+              </select>
+              <button id="applyAssignmentFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Asignare</th>
+                    <th>Masina</th>
+                    <th>Sofer</th>
+                    <th>Data start</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="assignmentsTableBody">
+                  <tr>
+                    <td colspan="5" class="empty-cell">Lista de asignari va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare asignare</h3>
+            </div>
+
+            <form id="assignmentForm" class="module-form">
+              <input id="assignmentID" type="hidden" />
+              <input id="assignmentMasinaID" type="text" placeholder="Nr inmatriculare / MasinaID" list="vehiclePlateOptions" data-vehicle-lookup="assignment" required />
+              <input id="assignmentSoferID" type="text" placeholder="SoferID" required />
+              <div class="field-stack">
+                <input id="assignmentDataStart" type="date" required />
+                <p class="field-help">Data de inceput a asignarii</p>
+              </div>
+              <select id="assignmentStatus">
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="INCHEIATA">INCHEIATA</option>
+              </select>
+              <input id="assignmentMotivIncheiere" type="text" placeholder="Motiv incheiere" />
+              <textarea id="assignmentObservatii" class="module-form__textarea" placeholder="Observatii"></textarea>
+              <div class="module-form__actions">
+                <button id="saveAssignmentBtn" class="btn btn--primary" type="submit">Salveaza asignare</button>
+                <button id="cancelAssignmentEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteAssignmentBtn" class="btn btn--danger hidden" type="button">Sterge asignare</button>
+              </div>
+              <p id="assignmentMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+        <section id="alimentariSection" class="app-section hidden">
+          <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Alimentari</h3>
+            <p>Lista detaliata de alimentari va ramane accesibila separat, cu citire si validare dupa rol.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            </div>
+          </div>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export rapoarte</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportFuelVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+              <input id="reportFuelDateFrom" type="date" />
+              <input id="reportFuelDateTo" type="date" />
+              <button id="exportFuelExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportFuelPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+              <p id="fuelReportMessage" class="message"></p>
+            </article>
+
+            <article class="card export-card">
+              <div class="card__header">
+                <h3>Consum combustibil</h3>
+              </div>
+              <div class="filters-row filters-row--compact">
+                <input id="fuelConsumptionVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+                <input id="fuelConsumptionDateFrom" type="date" />
+                <input id="fuelConsumptionDateTo" type="date" />
+                <button id="calculateFuelConsumptionBtn" class="btn btn--secondary" type="button">Calculeaza</button>
+              </div>
+              <p id="fuelConsumptionMessage" class="message"></p>
+            </article>
+
+          <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="fuelFilterMasina" type="text" placeholder="Filtru nr inmatriculare / ID" />
+              <input id="fuelFilterSofer" type="text" placeholder="Filtru sofer ID" />
+              <input id="fuelFilterData" type="date" />
+              <button id="applyFuelFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Masina</th>
+                    <th>Sofer</th>
+                    <th>Data</th>
+                    <th>Litri</th>
+                    <th>Cost</th>
+                  </tr>
+                </thead>
+                <tbody id="fuelEntriesSectionBody">
+                  <tr>
+                    <td colspan="6" class="empty-cell">Lista de alimentari va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare alimentare</h3>
+            </div>
+
+            <form id="fuelForm" class="module-form">
+              <input id="fuelEntryID" type="hidden" />
+              <input id="fuelMasinaID" type="text" placeholder="Nr inmatriculare / MasinaID" list="vehiclePlateOptions" data-vehicle-lookup="fuel" required />
+              <input id="fuelSoferID" type="text" placeholder="SoferID" required />
+              <div class="field-stack">
+                <input id="fuelData" type="date" required />
+                <p class="field-help">Data alimentarii</p>
+              </div>
+              <input id="fuelKmLaAlimentare" type="number" placeholder="KM la alimentare" min="0" />
+              <input id="fuelCantitate" type="number" placeholder="Cantitate litri" min="0" step="0.01" />
+              <input id="fuelCostTotal" type="number" placeholder="Cost total" min="0" step="0.01" />
+              <input id="fuelPretPeLitru" type="number" placeholder="Pret pe litru" min="0" step="0.01" />
+              <input id="fuelStatie" type="text" placeholder="Statie" />
+              <input id="fuelTipCombustibil" type="text" placeholder="Tip combustibil" />
+              <textarea id="fuelObservatii" class="module-form__textarea" placeholder="Observatii"></textarea>
+              <div class="module-form__actions">
+                <button id="saveFuelBtn" class="btn btn--primary" type="submit">Salveaza alimentare</button>
+                <button id="cancelFuelEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteFuelBtn" class="btn btn--danger hidden" type="button">Sterge alimentare</button>
+              </div>
+              <p id="fuelMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+        <section id="foiParcursSection" class="app-section hidden">
+          <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Foi Parcurs</h3>
+            <p>Modulul principal de lucru pentru curse, kilometri si operare zilnica este mutat aici, separat de dashboard.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            <span class="capability-pill capability-pill--danger" data-capability="delete">Stergere</span>
+            </div>
+          </div>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export rapoarte</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportTripVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+              <input id="reportTripDateFrom" type="date" />
+              <input id="reportTripDateTo" type="date" />
+              <button id="exportTripExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportTripPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="tripReportMessage" class="message"></p>
+          </article>
+
+          <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="tripFilterMasina" type="text" placeholder="Filtru nr inmatriculare / ID" />
+              <input id="tripFilterSofer" type="text" placeholder="Filtru sofer ID" />
+              <input id="tripFilterData" type="date" />
+              <button id="applyTripFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Masina</th>
+                    <th>Sofer</th>
+                    <th>Data</th>
+                    <th>Destinatie</th>
+                    <th>Scop</th>
+                    <th>KM</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tripSheetsModuleBody">
+                  <tr>
+                    <td colspan="7" class="empty-cell">Nu exista foi de parcurs disponibile.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare foaie parcurs</h3>
+            </div>
+
+            <form id="tripSheetForm" class="module-form">
+              <input id="tripSheetId" type="hidden" />
+              <input id="tripMasinaID" type="hidden" />
+              <div class="field-stack">
+                <input id="tripVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" data-vehicle-lookup="trip" required />
+                <p class="field-help">Masina folosita pentru cursa</p>
+              </div>
+                <div id="tripSoferField" class="field-stack">
+                  <input id="tripSoferID" type="text" placeholder="SoferID" required />
+                  <p class="field-help">Sofer asociat cursei</p>
+                </div>
+              <div class="field-stack">
+                <input id="tripDataPlecare" type="date" required />
+                <p class="field-help">Data cursei / plecarii</p>
+              </div>
+              <input id="tripDestinatie" type="text" placeholder="Destinatie" required />
+              <input id="tripScop" type="text" placeholder="Scop deplasare" />
+              <input id="tripKmPlecare" type="hidden" />
+              <input id="tripKmSosire" type="number" placeholder="KM sosire" min="0" />
+              <p class="field-help field-help--highlight">KM plecare se completeaza automat din ultimul KM sosire al masinii selectate.</p>
+                  <div id="tripPhotoField" class="field-stack">
+                    <input id="tripKmPhotoUrl" type="hidden" />
+                    <input id="tripKmPhotoFile" type="file" accept="image/*" capture="environment" />
+                    <p class="field-help">Poza bord / odometru, optionala. La nevoie, telefonul deschide direct camera.</p>
+                  </div>
+                <div id="tripKmPhotoPreviewWrap" class="photo-preview hidden">
+                  <img id="tripKmPhotoPreview" class="photo-preview__image" alt="Preview bord / odometru" />
+                  <p id="tripKmPhotoPreviewName" class="field-help"></p>
+                </div>
+                <div id="tripOcrField" class="field-stack">
+                  <input id="tripOcrKm" type="number" placeholder="KM extrasi prin OCR" min="0" readonly />
+                </div>
+              <select id="tripStatus">
+                <option value="RAPORTATA">RAPORTATA</option>
+                <option value="IN_DESFASURARE">IN_DESFASURARE</option>
+                <option value="FINALIZATA">FINALIZATA</option>
+              </select>
+                <p id="tripControlHint" class="field-help field-help--highlight">KM plecare se completeaza automat din ultimul KM sosire al masinii selectate.</p>
+              <div class="module-form__actions">
+                <button id="saveTripSheetBtn" class="btn btn--primary" type="submit">Salveaza foaie</button>
+                <button id="cancelTripEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteTripSheetBtn" class="btn btn--danger hidden" type="button">Sterge foaie</button>
+              </div>
+              <p id="tripSheetMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section id="documenteSection" class="app-section hidden">
+        <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Documente</h3>
+            <p>Expirari si documente critice intr-o pagina dedicata, cu acces de citire si editare in functie de rol.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+          </div>
+        </div>
+
+        <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="documentFilterMasina" type="text" placeholder="Filtru nr inmatriculare / ID" />
+              <input id="documentFilterTip" type="text" placeholder="Filtru tip document" />
+              <select id="documentFilterStatus">
+                <option value="">Toate statusurile</option>
+                <option value="ACTIV">ACTIV</option>
+                <option value="EXPIRAT">EXPIRAT</option>
+              </select>
+              <button id="applyDocumentFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Masina</th>
+                    <th>Tip</th>
+                    <th>Expira la</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="documentsSectionBody">
+                  <tr>
+                    <td colspan="5" class="empty-cell">Lista de documente va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Adaugare / editare document</h3>
+            </div>
+
+            <form id="documentForm" class="module-form">
+              <input id="documentID" type="hidden" />
+              <input id="documentMasinaID" type="text" placeholder="Nr inmatriculare / MasinaID" list="vehiclePlateOptions" data-vehicle-lookup="document" required />
+              <input id="documentTip" type="text" placeholder="Tip document" required />
+              <input id="documentSerieNumar" type="text" placeholder="Serie / numar" />
+              <div class="field-stack">
+                <input id="documentDataEmitere" type="date" />
+                <p class="field-help">Data emiterii documentului</p>
+              </div>
+              <div class="field-stack">
+                <input id="documentDataExpirare" type="date" />
+                <p class="field-help">Data expirarii documentului</p>
+              </div>
+              <input id="documentCost" type="number" placeholder="Cost" min="0" step="0.01" />
+              <input id="documentFurnizor" type="text" placeholder="Furnizor" />
+              <select id="documentStatus">
+                <option value="ACTIV">ACTIV</option>
+                <option value="EXPIRAT">EXPIRAT</option>
+              </select>
+              <input id="documentFisierURL" type="text" placeholder="Fisier URL" />
+              <textarea id="documentObservatii" class="module-form__textarea" placeholder="Observatii"></textarea>
+              <div class="module-form__actions">
+                <button id="saveDocumentBtn" class="btn btn--primary" type="submit">Salveaza document</button>
+                <button id="cancelDocumentEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteDocumentBtn" class="btn btn--danger hidden" type="button">Sterge document</button>
+              </div>
+              <p id="documentMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+
+        <section id="defecteSection" class="app-section hidden">
+          <div class="section-intro card">
+          <div>
+            <p class="section-intro__eyebrow">Sectiune operationala</p>
+            <h3>Defecte</h3>
+            <p>Raportarea si rezolvarea defectelor ramane disponibila separat, cu drepturi diferite pe rol.</p>
+          </div>
+          <div class="section-capabilities">
+            <span class="capability-pill">Citire</span>
+            <span class="capability-pill capability-pill--edit" data-capability="edit">Editare</span>
+            </div>
+          </div>
+
+          <article class="card export-card">
+            <div class="card__header">
+              <h3>Export rapoarte</h3>
+            </div>
+            <div class="filters-row filters-row--compact">
+              <input id="reportDefectVehicleRef" type="text" placeholder="Nr inmatriculare" list="vehiclePlateOptions" />
+              <input id="reportDefectDateFrom" type="date" />
+              <input id="reportDefectDateTo" type="date" />
+              <button id="exportDefectExcelBtn" class="btn btn--secondary" type="button">Excel</button>
+              <button id="exportDefectPdfBtn" class="btn btn--secondary" type="button">PDF</button>
+            </div>
+            <p id="defectReportMessage" class="message"></p>
+          </article>
+
+          <div class="module-grid">
+          <article class="card">
+            <div class="card__header">
+              <h3>Filtre si lista</h3>
+            </div>
+
+            <div class="filters-row">
+              <input id="defectFilterMasina" type="text" placeholder="Filtru nr inmatriculare / ID" />
+              <input id="defectFilterSofer" type="text" placeholder="Filtru sofer ID" />
+              <select id="defectFilterSeveritate">
+                <option value="">Toate severitatile</option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+              <button id="applyDefectFiltersBtn" class="btn btn--secondary" type="button">Aplica filtre</button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Masina</th>
+                    <th>Titlu</th>
+                    <th>Severitate</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="defectsSectionBody">
+                  <tr>
+                    <td colspan="5" class="empty-cell">Lista de defecte va fi conectata aici.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card__header">
+              <h3>Raportare / editare defect</h3>
+            </div>
+
+            <form id="defectForm" class="module-form">
+              <input id="defectID" type="hidden" />
+              <input id="defectMasinaID" type="text" placeholder="Nr inmatriculare / MasinaID" list="vehiclePlateOptions" data-vehicle-lookup="defect" required />
+              <input id="defectSoferID" type="text" placeholder="SoferID" required />
+              <div class="field-stack">
+                <input id="defectDataRaportare" type="date" required />
+                <p class="field-help">Data raportarii defectului</p>
+              </div>
+              <input id="defectTitlu" type="text" placeholder="Titlu" required />
+              <select id="defectSeveritate">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+              <select id="defectStatus">
+                <option value="RAPORTAT">RAPORTAT</option>
+                <option value="IN_VERIFICARE">IN_VERIFICARE</option>
+                <option value="IN_REPARATIE">IN_REPARATIE</option>
+                <option value="REZOLVAT">REZOLVAT</option>
+                <option value="RESPINS">RESPINS</option>
+              </select>
+              <input id="defectCostEstimat" type="number" placeholder="Cost estimat" min="0" step="0.01" />
+              <input id="defectCostFinal" type="number" placeholder="Cost final" min="0" step="0.01" />
+              <input id="defectPozaURL" type="text" placeholder="Poza URL" />
+              <textarea id="defectDescriere" class="module-form__textarea" placeholder="Descriere / rezolvare"></textarea>
+              <div class="module-form__actions">
+                <button id="saveDefectBtn" class="btn btn--primary" type="submit">Salveaza defect</button>
+                <button id="cancelDefectEditBtn" class="btn btn--secondary hidden" type="button">Anuleaza editarea</button>
+                <button id="deleteDefectBtn" class="btn btn--danger hidden" type="button">Sterge defect</button>
+              </div>
+              <p id="defectMessage" class="message"></p>
+            </form>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav id="mobileDriverNav" class="mobile-driver-nav hidden" aria-label="Navigare rapida sofer">
+    <button type="button" class="mobile-driver-nav__btn mobile-driver-nav__btn--active" data-mobile-section="foi-parcurs">Foi Parcurs</button>
+    <button type="button" class="mobile-driver-nav__btn" data-mobile-section="alimentari">Alimentari</button>
+    <button type="button" class="mobile-driver-nav__btn" data-mobile-section="bazin-motorina">Bazin</button>
+    <button type="button" class="mobile-driver-nav__btn" data-mobile-section="defecte">Defecte</button>
+    <button id="mobileDriverLogoutBtn" type="button" class="mobile-driver-nav__btn">Logout</button>
+  </nav>
+
+  <datalist id="vehiclePlateOptions"></datalist>
+  <datalist id="utilajOptions"></datalist>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

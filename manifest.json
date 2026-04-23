@@ -1,0 +1,24 @@
+{
+  "name": "Manager Flota",
+  "short_name": "Flota",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Aplicatie mobila si web pentru operarea flotei si a foilor de parcurs.",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230f172a'/%3E%3Cpath d='M48 116h96l-8-40c-2-10-11-18-22-18H78c-11 0-20 8-22 18l-8 40Z' fill='%232563eb'/%3E%3Crect x='60' y='86' width='72' height='24' rx='12' fill='%23bfdbfe'/%3E%3Ccircle cx='72' cy='126' r='10' fill='%23e5e7eb'/%3E%3Ccircle cx='120' cy='126' r='10' fill='%23e5e7eb'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230f172a'/%3E%3Cpath d='M48 116h96l-8-40c-2-10-11-18-22-18H78c-11 0-20 8-22 18l-8 40Z' fill='%232563eb'/%3E%3Crect x='60' y='86' width='72' height='24' rx='12' fill='%23bfdbfe'/%3E%3Ccircle cx='72' cy='126' r='10' fill='%23e5e7eb'/%3E%3Ccircle cx='120' cy='126' r='10' fill='%23e5e7eb'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
