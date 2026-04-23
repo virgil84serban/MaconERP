@@ -1,7 +1,23 @@
 {
   "routes": [
+    { "src": "/api/login", "dest": "/api/auth?resource=login" },
+    { "src": "/api/logout", "dest": "/api/auth?resource=logout" },
+    { "src": "/api/session", "dest": "/api/auth?resource=session" },
+    { "src": "/api/users", "dest": "/api/admin?resource=users" },
+    { "src": "/api/drivers", "dest": "/api/admin?resource=drivers" },
+    { "src": "/api/vehicles", "dest": "/api/fleet?resource=vehicles" },
+    { "src": "/api/assignments", "dest": "/api/fleet?resource=assignments" },
+    { "src": "/api/documents", "dest": "/api/fleet?resource=documents" },
+    { "src": "/api/dashboard-summary", "dest": "/api/operations?resource=dashboard-summary" },
+    { "src": "/api/trip-sheets", "dest": "/api/operations?resource=trip-sheets" },
+    { "src": "/api/defects", "dest": "/api/operations?resource=defects" },
+    { "src": "/api/revisions", "dest": "/api/operations?resource=revisions" },
+    { "src": "/api/fuel-entries", "dest": "/api/fuel?resource=fuel-entries" },
+    { "src": "/api/fuel-tanks", "dest": "/api/fuel?resource=fuel-tanks" },
+    { "src": "/api/fuel-tank-transactions", "dest": "/api/fuel?resource=fuel-tank-transactions" },
+    { "src": "/api/ping", "dest": "/api/misc?resource=ping" },
+    { "src": "/api/runtime-config", "dest": "/api/misc?resource=runtime-config" },
     { "handle": "filesystem" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
